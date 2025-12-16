@@ -1,0 +1,31 @@
+[project]
+name = "auth-service"
+version = "0.1.0"
+description = "Auth microservice built with FastAPI and SQLAlchemy."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "pydantic>=2.9.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-jose[cryptography]>=3.3.0",
+    "psycopg2-binary>=2.9.10",
+    "python-dotenv>=1.0.1",
+    "mangum>=0.17.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "mypy>=1.10.0", "ruff>=0.6.0"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+exclude = ["alembic*"]
+
+[tool.uvicorn]
+app = "app.main:app"
+reload = true

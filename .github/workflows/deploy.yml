@@ -1,0 +1,86 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  render:
+    name: "Deploy to Render (${{ matrix.service }})"
+    needs: []
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        service: [auth, users, expenses]
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID_AUTH: ${{ secrets.RENDER_SERVICE_ID_AUTH }}
+          RENDER_SERVICE_ID_USERS: ${{ secrets.RENDER_SERVICE_ID_USERS }}
+          RENDER_SERVICE_ID_EXPENSES: ${{ secrets.RENDER_SERVICE_ID_EXPENSES }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "RENDER_API_KEY not set"; exit 1;
+          fi
+          case "${{ matrix.service }}" in
+            auth) SERVICE_ID="$RENDER_SERVICE_ID_AUTH" ;;
+            users) SERVICE_ID="$RENDER_SERVICE_ID_USERS" ;;
+            expenses) SERVICE_ID="$RENDER_SERVICE_ID_EXPENSES" ;;
+          esac
+          if [ -z "$SERVICE_ID" ]; then
+            echo "Service id not set for ${{ matrix.service }}"; exit 1;
+          fi
+          curl -fsSL \
+            -X POST "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Accept: application/json" \
+            -d ''
+
+  vercel:
+    name: "Deploy to Vercel (${{ matrix.service }})"
+    needs: []
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        service: [auth, users, expenses]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node for Vercel CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy service
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID_AUTH: ${{ secrets.VERCEL_PROJECT_ID_AUTH }}
+          VERCEL_PROJECT_ID_USERS: ${{ secrets.VERCEL_PROJECT_ID_USERS }}
+          VERCEL_PROJECT_ID_EXPENSES: ${{ secrets.VERCEL_PROJECT_ID_EXPENSES }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ]; then
+            echo "VERCEL_TOKEN or VERCEL_ORG_ID not set"; exit 1;
+          fi
+          case "${{ matrix.service }}" in
+            auth) PROJECT_ID="$VERCEL_PROJECT_ID_AUTH" ;;
+            users) PROJECT_ID="$VERCEL_PROJECT_ID_USERS" ;;
+            expenses) PROJECT_ID="$VERCEL_PROJECT_ID_EXPENSES" ;;
+          esac
+          if [ -z "$PROJECT_ID" ]; then
+            echo "Project id not set for ${{ matrix.service }}"; exit 1;
+          fi
+          cd "${{ matrix.service }}"
+          VERCEL_PROJECT_ID="$PROJECT_ID" \
+          vercel pull --yes --environment=production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID"
+          VERCEL_PROJECT_ID="$PROJECT_ID" \
+          vercel deploy --prod --yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --cwd .

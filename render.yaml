@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: auth-service
+    rootDir: auth
+    env: python
+    runtime: python3
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /auth/health
+    autoDeploy: false
+    envVars:
+      - key: AUTH_DATABASE_URL
+        sync: false
+      - key: AUTH_JWT_SECRET
+        sync: false
+      - key: AUTH_JWT_ALGORITHM
+        value: HS256
+      - key: AUTH_JWT_EXPIRE_MINUTES
+        value: 30
+
+  - type: web
+    name: users-service
+    rootDir: users
+    env: python
+    runtime: python3
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /users/health
+    autoDeploy: false
+    envVars:
+      - key: USERS_DATABASE_URL
+        sync: false
+      - key: AUTH_JWT_SECRET
+        sync: false
+      - key: AUTH_JWT_ALGORITHM
+        value: HS256
+
+  - type: web
+    name: expenses-service
+    rootDir: expenses
+    env: python
+    runtime: python3
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /expenses/health
+    autoDeploy: false
+    envVars:
+      - key: EXPENSES_DATABASE_URL
+        sync: false
+      - key: AUTH_JWT_SECRET
+        sync: false
+      - key: AUTH_JWT_ALGORITHM
+        value: HS256
