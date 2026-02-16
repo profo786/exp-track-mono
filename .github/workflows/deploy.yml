@@ -28,7 +28,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Alembic migrations (auth)
-        working-directory: auth
         env:
           AUTH_DATABASE_URL: ${{ secrets.AUTH_DATABASE_URL }}
-        run: alembic -c alembic.ini upgrade head
+        run: alembic -c auth/alembic.ini upgrade head
