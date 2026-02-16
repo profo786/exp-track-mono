@@ -7,39 +7,6 @@ on:
       - main
 
 jobs:
-  render:
-    name: "Deploy to Render (${{ matrix.service }})"
-    needs: []
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    strategy:
-      matrix:
-        service: [auth, users, expenses]
-    steps:
-      - name: Trigger Render deploy
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          RENDER_SERVICE_ID_AUTH: ${{ secrets.RENDER_SERVICE_ID_AUTH }}
-          RENDER_SERVICE_ID_USERS: ${{ secrets.RENDER_SERVICE_ID_USERS }}
-          RENDER_SERVICE_ID_EXPENSES: ${{ secrets.RENDER_SERVICE_ID_EXPENSES }}
-        run: |
-          if [ -z "$RENDER_API_KEY" ]; then
-            echo "RENDER_API_KEY not set"; exit 1;
-          fi
-          case "${{ matrix.service }}" in
-            auth) SERVICE_ID="$RENDER_SERVICE_ID_AUTH" ;;
-            users) SERVICE_ID="$RENDER_SERVICE_ID_USERS" ;;
-            expenses) SERVICE_ID="$RENDER_SERVICE_ID_EXPENSES" ;;
-          esac
-          if [ -z "$SERVICE_ID" ]; then
-            echo "Service id not set for ${{ matrix.service }}"; exit 1;
-          fi
-          curl -fsSL \
-            -X POST "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
-            -H "Authorization: Bearer $RENDER_API_KEY" \
-            -H "Accept: application/json" \
-            -d ''
-
   auth-migrate:
     name: "Auth DB migration"
     needs: []
