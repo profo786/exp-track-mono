@@ -31,4 +31,4 @@ jobs:
         working-directory: auth
         env:
           AUTH_DATABASE_URL: ${{ secrets.AUTH_DATABASE_URL }}
-        run: alembic upgrade head
+        run: alembic -c alembic.ini upgrade head
